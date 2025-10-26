@@ -1,5 +1,5 @@
 import { App } from '@slack/bolt'
-import { config } from './config.js'
+import { config } from './config'
 
 const app = new App({
     token: config.slack.botToken,

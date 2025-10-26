@@ -3,7 +3,7 @@ import {
     parseSummaryMessage,
     hasSummaryMessageHeader,
     findSummaryMessage,
-} from '../parsers/summary-message-parser.js'
+} from '../parsers/summary-message-parser'
 
 describe('hasSummaryMessageHeader', () => {
     it('should return true for messages with header block', () => {

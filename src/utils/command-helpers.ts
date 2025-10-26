@@ -3,7 +3,7 @@
  */
 
 import { WebClient } from '@slack/web-api'
-import { getIncidentMetadata, type IncidentMetadata } from '../storage.js'
+import { getIncidentMetadata, type IncidentMetadata } from '../storage'
 
 /**
  * Result of requiring an incident channel

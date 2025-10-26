@@ -1,0 +1,15 @@
+node_modules/
+npm-debug.log
+coverage/
+.env
+.git/
+.gitignore
+.DS_Store
+*.md
+dist/
+docs/
+src/__tests__/
+jest.config.js
+jest.setup.js
+eslint.config.js
+tsconfig.json

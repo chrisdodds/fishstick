@@ -34,6 +34,7 @@ export default [
         files: ['*.js'],
         languageOptions: {
             globals: {
+                console: 'readonly',
                 process: 'readonly',
             },
         },

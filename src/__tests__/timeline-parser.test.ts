@@ -6,7 +6,7 @@ import {
     parseTimelineEvents,
     sortTimelineEvents,
     getParticipants,
-} from '../parsers/timeline-parser.js'
+} from '../parsers/timeline-parser'
 
 describe('parseLogEvent', () => {
     it('should parse logged timeline events', () => {

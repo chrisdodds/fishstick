@@ -1,6 +1,6 @@
 import { describe, it, expect, jest } from '@jest/globals'
 import type { WebClient } from '@slack/web-api'
-import { requireIncidentChannel } from '../utils/command-helpers.js'
+import { requireIncidentChannel } from '../utils/command-helpers'
 
 describe('requireIncidentChannel', () => {
     it('should return incident when in incident channel', async () => {

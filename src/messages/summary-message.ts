@@ -76,7 +76,7 @@ function summaryMessage(incident: IncidentMetadata & { channel_id?: string }) {
                 elements: [
                     {
                         type: 'mrkdwn',
-                        text: `<https://slack.com/archives/${teamChannelId}/p${urlTs}|View team announcement>`,
+                        text: `<https://slack.com/archives/${teamChannelId}/p${urlTs}|View incident announcement>`,
                     },
                 ],
             })

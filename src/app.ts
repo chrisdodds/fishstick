@@ -1,7 +1,7 @@
-import IncidentCommand from './commands/incident.js'
-import { app } from './slack.js'
-import ModalListeners from './listeners/listeners.js'
-import { config } from './config.js'
+import IncidentCommand from './commands/incident'
+import { app } from './slack'
+import ModalListeners from './listeners/listeners'
+import { config } from './config'
 
 ;(async () => {
     try {
@@ -10,8 +10,8 @@ import { config } from './config.js'
         ModalListeners()
 
         await app.start(config.server.port)
-        console.log('⚡️ Bolt app is running!')
+        app.logger.info('⚡️ Bolt app is running!')
     } catch (error) {
-        console.error(error)
+        app.logger.error('Failed to start app:', error)
     }
 })()

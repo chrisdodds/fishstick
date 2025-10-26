@@ -9,7 +9,7 @@ Fish Stick helps engineering teams manage incidents with minimal overhead. Creat
 
 ## Why Fish Stick?
 
-**The Problem:** Most incident management tools are either too simple (basic Slack workflows) or too complex (enterprise platforms with databases, web UIs, and steep learning curves).
+**The Problem:** Most incident management tools are either too simple (basic Slack workflows) or too complex (enterprise platforms with a million knobs, dependencies, and steep learning curves).
 
 **The Solution:** Fish Stick sits in the sweet spot:
 
@@ -17,6 +17,10 @@ Fish Stick helps engineering teams manage incidents with minimal overhead. Creat
 - ✅ Simpler than enterprise tools (stateless, no infrastructure)
 - ✅ Fast to deploy (one command, no database)
 - ✅ Easy to customize (clean TypeScript codebase)
+
+## Demo
+
+![Fish Stick Demo](docs/demo.gif)
 
 ## Features
 
@@ -35,14 +39,42 @@ Fish Stick helps engineering teams manage incidents with minimal overhead. Creat
 
 ### 1. Create a Slack App
 
+[![Create Slack App](https://img.shields.io/badge/Create%20Slack%20App-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://api.slack.com/apps/new)
+
+**Option A: Use the App Manifest (Recommended - 1 minute setup)**
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps)
+2. Click **Create New App** → **From an app manifest**
+3. Select your workspace
+4. Copy and paste the contents of [`slack-app-manifest.yml`](slack-app-manifest.yml)
+5. Review and create the app
+6. **For local development:** Enable Socket Mode in app settings → Generate an App-Level Token with `connections:write` scope
+7. **For production:** Configure Request URL to `https://your-domain.com/slack/events`
+8. Install the app to your workspace
+9. Copy your tokens (Bot Token, Signing Secret, and App Token if using Socket Mode)
+
+**Option B: Manual Setup**
+
 1. Go to [api.slack.com/apps](https://api.slack.com/apps)
 2. Create a new app (from scratch)
-3. Enable **Socket Mode** and generate an app token
+3. Enable **Socket Mode** and generate an app token with `connections:write` scope
 4. Add these OAuth scopes (see [full list below](#required-oauth-scopes))
-5. Install the app to your workspace
-6. Copy your tokens
+5. Create the `/incident` slash command (see [Slash Command Setup](#slash-command-setup))
+6. Install the app to your workspace
+7. Copy your tokens
 
-### 2. Install & Configure
+### 2. Create an Incidents Channel
+
+1. Create a public channel in your Slack workspace (e.g., `#incidents`)
+2. Invite Fish Stick to the channel: `/invite @Fish Stick`
+3. Copy the channel ID:
+   - Right-click the channel name → **View channel details**
+   - Scroll down to find the Channel ID (looks like `C123456789`)
+   - You'll use this as `TEAM_UPDATE_CHANNEL_ID` in your environment variables
+
+This is where Fish Stick will post announcements whenever a new incident is created.
+
+### 3. Install & Configure
 
 ```bash
 # Clone and install
@@ -55,9 +87,14 @@ cp .env.example .env
 # Edit .env with your tokens
 ```
 
-### 3. Run
+### 4. Run
 
 ```bash
+# Development (with auto-reload)
+npm run dev
+
+# Production (build first)
+npm run build
 npm start
 ```
 
@@ -81,11 +118,15 @@ That's it! The bot is now running in your Slack workspace.
 # Required
 SLACK_BOT_TOKEN=xoxb-your-bot-token
 SLACK_SIGNING_SECRET=your-signing-secret
-SLACK_APP_TOKEN=xapp-your-app-token  # For socket mode
 
-# Optional
+# Recommended
 TEAM_UPDATE_CHANNEL_ID=C123456  # Where to post incident announcements
-SOCKET_MODE=true                # Use socket mode (recommended for dev)
+
+# Development (Socket Mode) - no public URL needed
+SOCKET_MODE=true
+SLACK_APP_TOKEN=xapp-your-app-token
+
+# Production (HTTP Mode) - default, requires public URL
 PORT=3000                       # Server port (default: 3000)
 ```
 
@@ -107,13 +148,25 @@ Deploy anywhere that runs Node.js:
 ### Docker
 
 ```bash
+# Build the image
 docker build -t fishstick .
-docker run -e SLACK_BOT_TOKEN=xoxb-... -e SLACK_SIGNING_SECRET=... fishstick
+
+# Run with environment file
+docker run --env-file .env fishstick
+
+# Or pass environment variables directly
+docker run \
+  -e SLACK_BOT_TOKEN=xoxb-... \
+  -e SLACK_SIGNING_SECRET=... \
+  -e SLACK_APP_TOKEN=xapp-... \
+  -e SOCKET_MODE=true \
+  -e TEAM_UPDATE_CHANNEL_ID=C123456 \
+  fishstick
 ```
 
 ### Render / Fly.io / Railway
 
-- **Build command:** `npm install`
+- **Build command:** `npm run build`
 - **Start command:** `npm start`
 - Set environment variables in dashboard
 
@@ -122,6 +175,9 @@ docker run -e SLACK_BOT_TOKEN=xoxb-... -e SLACK_SIGNING_SECRET=... fishstick
 ```bash
 heroku create
 heroku config:set SLACK_BOT_TOKEN=xoxb-...
+heroku config:set SLACK_SIGNING_SECRET=...
+heroku config:set SLACK_APP_TOKEN=xapp-...
+heroku config:set SOCKET_MODE=true
 git push heroku main
 ```
 
@@ -149,38 +205,60 @@ Bot Token Scopes needed for your Slack app:
 - `pins:read`
 - `pins:write`
 
-## Slash Command Setup
+## Deployment Modes
 
-In your Slack app settings, create the `/incident` command:
+Fish Stick supports two deployment modes:
 
-- **Command:** `/incident`
-- **Request URL:** Leave blank if using Socket Mode for development
-- **Request URL (Production):** `https://your-domain.com/slack/events`
-- **Short Description:** `Manage incidents`
-- **Usage Hint:** `[update|log|ic|timeline|resolve|help]`
+### Socket Mode (Development)
 
-Socket Mode (for local dev):
+**Best for:** Local development, no public URL needed
 
-- Enable **Socket Mode** in your app settings
-- Generate an **App-Level Token** with `connections:write` scope
-- Set `SOCKET_MODE=true` and `SLACK_APP_TOKEN=xapp-...` in your `.env`
+1. Enable **Socket Mode** in your Slack app settings
+2. Generate an **App-Level Token** with `connections:write` scope
+3. Set environment variables:
+   ```bash
+   SOCKET_MODE=true
+   SLACK_APP_TOKEN=xapp-your-token
+   ```
+4. The `/incident` command Request URL can be left blank
 
-Production (HTTP mode):
+### HTTP Mode (Production)
 
-- Disable Socket Mode or set `SOCKET_MODE=false`
-- Configure **Request URL** to point to your deployed app
-- Ensure your app is publicly accessible
+**Best for:** Production deployments on any hosting platform
+
+1. Deploy your app to a publicly accessible URL
+2. In Slack app settings, set Request URL for:
+   - **Slash Commands** (`/incident`): `https://your-domain.com/slack/events`
+   - **Interactivity & Shortcuts**: `https://your-domain.com/slack/events`
+   - **Event Subscriptions**: `https://your-domain.com/slack/events`
+3. Set environment variables:
+   ```bash
+   SOCKET_MODE=false  # or leave unset
+   PORT=3000
+   ```
+4. Ensure Socket Mode is **disabled** in your Slack app settings
 
 ## Development
 
 ```bash
-npm start  # Auto-restarts on file changes
-npm run lint  # Run linter
-npm test  # Run tests
-npm run test:watch  # Run tests in watch mode
+npm run dev            # Dev mode with auto-restart (tsx watch)
+npm run build          # Build with esbuild
+npm start              # Production mode (run built code)
+npm run lint           # Run linter
+npm test               # Run tests
+npm run test:watch     # Run tests in watch mode
 npm run test:coverage  # Run tests with coverage
-npm run build  # Build TypeScript
 ```
+
+**Project Structure:**
+- `src/` - TypeScript source code
+- `src/commands/` - Slash command handlers
+- `src/listeners/` - Slack event listeners
+- `src/parsers/` - Message parsing logic
+- `src/utils/` - Helper functions
+- `src/__tests__/` - Jest unit tests
+- `build.js` - esbuild configuration
+- `dist/` - Compiled output (gitignored)
 
 ## Contributing
 

@@ -109,12 +109,6 @@ function startIncidentModal() {
                     })
                 }
             }
-
-            // Log channel creation as message in incident channel
-            await client.chat.postMessage({
-                channel: incidentChannelId,
-                text: `🚨 Incident Channel Created by <@${userId}>`,
-            })
         } catch (error) {
             logger.error(error)
         }

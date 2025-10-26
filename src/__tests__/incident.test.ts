@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals'
-import generateSummaryMessage from '../messages/summary-message.js'
-import generateTeamSummaryMessage from '../messages/team-summary-message.js'
-import type { IncidentMetadata } from '../storage.js'
+import generateSummaryMessage from '../messages/summary-message'
+import generateTeamSummaryMessage from '../messages/team-summary-message'
+import type { IncidentMetadata } from '../storage'
 
 describe('Summary Message Generation', () => {
     const mockMetadata: IncidentMetadata = {

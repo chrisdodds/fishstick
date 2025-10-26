@@ -3,7 +3,10 @@ import {
     parseSummaryMessage,
     findSummaryMessage,
     type ParsedIncidentData,
-} from './parsers/summary-message-parser.js'
+} from './parsers/summary-message-parser'
+import { app } from './slack'
+
+const logger = app.logger
 
 // Full incident metadata
 export interface IncidentMetadata {
@@ -107,7 +110,7 @@ export async function getIncidentMetadata(
                     }
                 }
             } catch (err) {
-                console.error('Failed to fetch pinned message:', err)
+                logger.error('Failed to fetch pinned message:', err)
             }
         }
 
@@ -140,7 +143,7 @@ export async function getIncidentMetadata(
             team_message_ts: parsedData.team_message_ts,
         }
     } catch (error) {
-        console.error('Failed to get incident metadata:', error)
+        logger.error('Failed to get incident metadata:', error)
         return null
     }
 }
@@ -168,7 +171,7 @@ export async function getTeamMessageTs(
         const parsed = parseSummaryMessage(summaryMessage as never)
         return parsed.team_message_ts
     } catch (error) {
-        console.error('Failed to get team message ts:', error)
+        logger.error('Failed to get team message ts:', error)
         return undefined
     }
 }
@@ -221,7 +224,7 @@ export async function listIncidents(
 
         return incidents
     } catch (error) {
-        console.error('Failed to list incidents:', error)
+        logger.error('Failed to list incidents:', error)
         return []
     }
 }
@@ -241,7 +244,7 @@ export async function getIncidentTimeline(
 
         return result.messages || []
     } catch (error) {
-        console.error('Failed to get incident timeline:', error)
+        logger.error('Failed to get incident timeline:', error)
         return []
     }
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect, jest } from '@jest/globals'
 import type { WebClient } from '@slack/web-api'
-import { getIncidentMetadata, type IncidentMetadata } from '../storage.js'
-import generateSummaryMessage from '../messages/summary-message.js'
+import { getIncidentMetadata, type IncidentMetadata } from '../storage'
+import generateSummaryMessage from '../messages/summary-message'
 
 // Helper to create a properly formatted summary message using the REAL message generator
 function createSummaryMessage(data: Partial<IncidentMetadata>) {
