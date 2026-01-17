@@ -3,23 +3,15 @@
  * Extracts structured data from different types of incident-related messages.
  */
 
-export type TimelineEventType = 'start' | 'log' | 'update' | 'ic' | 'resolve'
+import type {
+    SlackMessage,
+    SlackBlock,
+    TimelineEvent,
+} from '../types'
+import { isContextBlock } from '../types'
 
-export interface TimelineEvent {
-    timestamp: number
-    type: TimelineEventType
-    text: string
-    user?: string
-}
-
-interface SlackMessage {
-    text?: string
-    ts?: string
-    blocks?: unknown[]
-    user?: string
-    bot_id?: string
-    subtype?: string
-}
+// Re-export for backwards compatibility
+export type { TimelineEvent, TimelineEventType } from '../types'
 
 /**
  * Parse a logged timeline event (from /incident log command)
@@ -34,25 +26,25 @@ export function parseLogEvent(message: SlackMessage): TimelineEvent | null {
     }
 
     const contextBlock = message.blocks?.find(
-        (b: unknown) => (b as Record<string, unknown>).type === 'context'
+        (b): b is SlackBlock => typeof b === 'object' && b !== null && (b as SlackBlock).type === 'context'
     )
 
-    if (!contextBlock) {
+    if (!contextBlock || !isContextBlock(contextBlock)) {
         return null
     }
 
-    const elements = (contextBlock as Record<string, unknown>).elements
-    if (!Array.isArray(elements) || elements.length === 0) {
+    const elements = contextBlock.elements
+    if (!elements || elements.length === 0) {
         return null
     }
 
     const element = elements[0]
-    if (!element || typeof element !== 'object' || !('text' in element)) {
+    if (!element || !element.text) {
         return null
     }
 
     // Extract: "🕐 <!date^1234567890^{date_short_pretty} at {time}|...> - <@USER>: *Event text*"
-    const elementText = String((element as Record<string, unknown>).text)
+    const elementText = String(element.text)
 
     // Try new format with user first
     let match = elementText.match(

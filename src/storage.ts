@@ -2,51 +2,22 @@ import { WebClient } from '@slack/web-api'
 import {
     parseSummaryMessage,
     findSummaryMessage,
-    type ParsedIncidentData,
 } from './parsers/summary-message-parser'
 import { app } from './slack'
+import type {
+    IncidentMetadata,
+    ParsedIncidentData,
+    ConversationInfoResponse,
+    ConversationsListResponse,
+    PinsListResponse,
+    HistoryResponse,
+    SlackMessage,
+} from './types'
 
 const logger = app.logger
 
-// Full incident metadata
-export interface IncidentMetadata {
-    name: string
-    issue: string
-    start_user_id: string
-    start_user_name: string
-    incident_commander_id?: string
-    incident_commander_name?: string
-    is_private: boolean
-    created_at: string
-    closed_at?: string
-    summary_message_ts?: string
-    team_message_ts?: string
-}
-
-interface Channel {
-    id?: string
-    name?: string
-    is_private?: boolean
-    created?: number
-}
-
-interface ConversationInfoResponse {
-    channel?: Channel
-}
-
-interface PinItem {
-    message?: {
-        ts?: string
-    }
-}
-
-interface PinsListResponse {
-    items?: PinItem[]
-}
-
-interface HistoryResponse {
-    messages?: unknown[]
-}
+// Re-export IncidentMetadata for backwards compatibility
+export type { IncidentMetadata } from './types'
 
 /**
  * Fetch and parse incident metadata from a Slack channel
@@ -76,11 +47,7 @@ export async function getIncidentMetadata(
         const pins = pinsResponse.items || []
 
         // Find the summary message among pinned items
-        let summaryMessage:
-            | ((typeof pins)[0]['message'] & {
-                  blocks?: unknown[]
-              })
-            | undefined = undefined
+        let summaryMessage: SlackMessage | undefined = undefined
 
         for (const item of pins) {
             const msg = item.message
@@ -94,16 +61,10 @@ export async function getIncidentMetadata(
                     inclusive: true,
                 })) as HistoryResponse
 
-                const actualMessage = messageResult.messages?.[0] as
-                    | {
-                          ts?: string
-                          blocks?: unknown[]
-                      }
-                    | undefined
+                const actualMessage = messageResult.messages?.[0]
 
                 if (actualMessage) {
-                    const messages = [actualMessage]
-                    const found = await findSummaryMessage(messages as never)
+                    const found = await findSummaryMessage([actualMessage])
                     if (found) {
                         summaryMessage = actualMessage
                         break
@@ -122,7 +83,7 @@ export async function getIncidentMetadata(
         }
 
         if (summaryMessage) {
-            parsedData = parseSummaryMessage(summaryMessage as never)
+            parsedData = parseSummaryMessage(summaryMessage)
         }
 
         return {
@@ -160,15 +121,13 @@ export async function getTeamMessageTs(
             channel: channel_id,
         })) as PinsListResponse
 
-        const summaryMessage = pinsResponse.items?.[0]?.message as
-            | { blocks?: unknown[] }
-            | undefined
+        const summaryMessage = pinsResponse.items?.[0]?.message
 
         if (!summaryMessage?.blocks) {
             return undefined
         }
 
-        const parsed = parseSummaryMessage(summaryMessage as never)
+        const parsed = parseSummaryMessage(summaryMessage as SlackMessage)
         return parsed.team_message_ts
     } catch (error) {
         logger.error('Failed to get team message ts:', error)
@@ -203,7 +162,7 @@ export async function listIncidents(
         const result = (await client.conversations.list({
             types: 'public_channel,private_channel',
             limit: 1000,
-        })) as { channels?: Channel[] }
+        })) as ConversationsListResponse
 
         const incidents: Array<{
             channel_id: string

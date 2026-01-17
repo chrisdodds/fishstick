@@ -4,12 +4,17 @@ import {
     parseTimelineEvents,
     sortTimelineEvents,
     getParticipants,
-    type TimelineEvent,
 } from '../parsers/timeline-parser'
 import {
     requireIncidentChannel,
     formatDuration,
 } from '../utils/command-helpers'
+import type {
+    TimelineEvent,
+    SlackMessage,
+    SlackPinItem,
+    SlackFile,
+} from '../types'
 
 async function generateTimeline(
     body: SlashCommand,
@@ -64,7 +69,7 @@ async function generateTimeline(
         }
 
         // Parse all timeline events from messages
-        const parsedEvents = parseTimelineEvents(history.messages as never[])
+        const parsedEvents = parseTimelineEvents(history.messages as SlackMessage[])
         allEvents.push(...parsedEvents)
 
         // Sort all events by timestamp (oldest first)
@@ -94,7 +99,7 @@ async function generateTimeline(
         }
 
         // Add participant count (exclude bot messages)
-        const participants = getParticipants(history.messages as never[])
+        const participants = getParticipants(history.messages as SlackMessage[])
         // Subtract 1 to exclude the bot itself
         const participantCount = Math.max(0, participants.size - 1)
         report += `*Participants:* ${participantCount}\n`
@@ -144,17 +149,14 @@ async function generateTimeline(
 
         // Pinned items (excluding the summary message)
         // Filter out the summary message by checking for the one with ts matching summary_message_ts
-        const pinnedItems = pins.items?.filter((item: unknown) => {
-            const pinnedItem = item as Record<string, unknown>
-            const message = pinnedItem.message as Record<string, unknown> | undefined
-            return message?.ts !== incident.summary_message_ts
+        const pinnedItems = (pins.items as SlackPinItem[] | undefined)?.filter((item) => {
+            return item.message?.ts !== incident.summary_message_ts
         }) || []
 
         if (pinnedItems.length > 0) {
             report += `*📌 Pinned Items* (all times UTC)\n\n`
-            pinnedItems.forEach((item: unknown) => {
-                const pinnedItem = item as Record<string, unknown>
-                const message = pinnedItem.message as Record<string, unknown> | undefined
+            pinnedItems.forEach((item) => {
+                const message = item.message
                 if (message) {
                     const timestamp = parseFloat(String(message.ts || '0'))
                     const date = new Date(timestamp * 1000)
@@ -175,9 +177,9 @@ async function generateTimeline(
                     const messageLink = `https://slack.com/archives/${body.channel_id}/p${messageTs}`
 
                     // Show file attachments
-                    const files = message.files as Array<Record<string, unknown>> | undefined
+                    const files = message.files as SlackFile[] | undefined
                     if (files && files.length > 0) {
-                        files.forEach((file: Record<string, unknown>) => {
+                        files.forEach((file) => {
                             const fileName = String(file.name || 'File')
                             report += `• ${dateStr} ${timeStr} - <${messageLink}|📎 ${fileName}>\n`
                         })

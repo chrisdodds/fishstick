@@ -3,46 +3,15 @@
  * These functions extract structured data from Slack block messages.
  */
 
-// Type definitions for Slack blocks we care about
-interface SlackBlock {
-    type: string
-    [key: string]: unknown
-}
+import type {
+    SlackBlock,
+    SlackMessage,
+    ParsedIncidentData,
+} from '../types'
+import { isSectionBlock } from '../types'
 
-interface SlackSectionBlock extends SlackBlock {
-    type: 'section'
-    text?: {
-        type: string
-        text: string
-    }
-}
-
-interface SlackMessage {
-    ts: string
-    blocks?: SlackBlock[]
-    [key: string]: unknown
-}
-
-export interface ParsedIncidentData {
-    issue: string
-    start_user_id: string
-    incident_commander_id: string
-    team_message_ts?: string
-}
-
-/**
- * Type guard to check if a block is a section block with text
- */
-function isSectionBlock(block: SlackBlock): block is SlackSectionBlock {
-    return (
-        block.type === 'section' &&
-        'text' in block &&
-        typeof block.text === 'object' &&
-        block.text !== null &&
-        'text' in block.text &&
-        typeof block.text.text === 'string'
-    )
-}
+// Re-export for backwards compatibility
+export type { ParsedIncidentData } from '../types'
 
 /**
  * Check if a message has a header block (identifies summary messages)
