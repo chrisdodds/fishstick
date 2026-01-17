@@ -3,14 +3,11 @@
  */
 
 import { WebClient } from '@slack/web-api'
-import { getIncidentMetadata, type IncidentMetadata } from '../storage'
+import { getIncidentMetadata } from '../storage'
+import type { RequireIncidentResult } from '../types'
 
-/**
- * Result of requiring an incident channel
- */
-export type RequireIncidentResult =
-    | { success: true; incident: IncidentMetadata }
-    | { success: false; error: string }
+// Re-export for backwards compatibility
+export type { RequireIncidentResult } from '../types'
 
 /**
  * Require that the command is being run in an incident channel.
